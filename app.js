@@ -65,8 +65,7 @@ function rssTimer() {
           let textLimited = text.substr(0, 2000)
 
           // Sending Discord Message
-          bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!",
-          {
+          bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
             embed: {
               "title": `${item.title}`,
               "description": `${textLimited}`,
