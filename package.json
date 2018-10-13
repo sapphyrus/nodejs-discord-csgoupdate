@@ -11,7 +11,7 @@
         "mysql": "^2.16.0",
         "nodemon": "^1.18.4",
         "npmlog": "^4.1.2",
-        "rss-feed-emitter": "^2.0.0",
+        "rss-feed-emitter": "^2.0.0"
     },
     "repository": {
         "type": "git",
