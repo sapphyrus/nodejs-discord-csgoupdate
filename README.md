@@ -25,7 +25,7 @@ npm install
 
 ### ▶️ Run the `cs_updates.sql` on your MySQL-Database
 
-### ▶️ Run `npm start` to start boosting
+### ▶️ Run `npm start` to start the bot
 
 ### 🎓 You are done.
 
