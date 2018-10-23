@@ -56,7 +56,7 @@ function rssTimer() {
     });
 
     // Check if Update has been posted already. If not, continue.
-    if (sql_date && sql_date.constructor === Array && sql_date.length === 0) {
+    if (sql_date.constructor === Array && sql_date.length === 0) {
       feeder.on('new-item', function(item) {
         if (item.title.includes(`${date}`)) {
           let text = htmlToText.fromString(item.description, {
@@ -65,7 +65,8 @@ function rssTimer() {
           let textLimited = text.substr(0, 2000)
 
           // Sending Discord Message
-          bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
+          bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!",
+          {
             embed: {
               "title": `${item.title}`,
               "description": `${textLimited}`,
