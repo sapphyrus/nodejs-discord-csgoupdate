@@ -1,5 +1,6 @@
 // Requirements
 const { Client } = require('discord.js');
+const { exec } = require('child_process');
 const mysql = require('mysql');
 const RssFeedEmitter = require('rss-feed-emitter');
 const htmlToText = require('html-to-text');
@@ -37,7 +38,7 @@ bot.on('ready', () => {
 function rssTimer() {
   // Get date of current day
   let getDate = new Date();
-  let date =((getDate.getMonth() +1) +'/'+ getDate.getDate() +'/'+ getDate.getFullYear());
+  let date = ((getDate.getMonth() +1) +'/'+ getDate.getDate() +'/'+ getDate.getFullYear());
 
   // Set feeder URL
   feeder.add({
@@ -65,8 +66,7 @@ function rssTimer() {
           let textLimited = text.substr(0, 2000)
 
           // Sending Discord Message
-          bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!",
-          {
+          bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
             embed: {
               "title": `${item.title}`,
               "description": `${textLimited}`,
@@ -78,6 +78,13 @@ function rssTimer() {
             }
           });
           db.query(`INSERT INTO cs_updates (date) VALUES ('${date}')`);
+
+          // Restarting the Bot to prevent spam
+          exec(`pm2 restart csgoupdatebot`, (err, stdout, stderr) => {
+            if (err) {
+                // node couldn't execute the command
+            }
+        });
         }
       });
     } else {
