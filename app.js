@@ -66,17 +66,31 @@ function rssTimer() {
           let textLimited = text.substr(0, 750)
 
           // Sending Discord Message
-          bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
-            embed: {
-              "title": `${item.title}`,
-              "description": `${textLimited}...\n\n[Continue reading on the CS:GO Blog](${item.link})`,
-              "url": `${item.link}`,
-              "color": 5478908,
-              "thumbnail": {
-                "url": "https://trinia.pro/file/09vvh.png"
+          if (textLimited.length > 749) {
+            bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
+              embed: {
+                "title": `${item.title}`,
+                "description": `${textLimited}...\n\n[Continue reading on the CS:GO Blog](${item.link})`,
+                "url": `${item.link}`,
+                "color": 5478908,
+                "thumbnail": {
+                  "url": "https://trinia.pro/file/09vvh.png"
+                }
               }
-            }
-          });
+            });
+          } else {
+            bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
+              embed: {
+                "title": `${item.title}`,
+                "description": `${textLimited}`,
+                "url": `${item.link}`,
+                "color": 5478908,
+                "thumbnail": {
+                  "url": "https://trinia.pro/file/09vvh.png"
+                }
+              }
+            });
+          }
           db.query(`INSERT INTO cs_updates (date) VALUES ('${date}')`);
 
           // Restarting the Bot to prevent spam
