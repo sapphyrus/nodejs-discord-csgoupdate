@@ -63,13 +63,13 @@ function rssTimer() {
           let text = htmlToText.fromString(item.description, {
             wordwrap: 130
           });
-          let textLimited = text.substr(0, 2000)
+          let textLimited = text.substr(0, 750)
 
           // Sending Discord Message
           bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
             embed: {
               "title": `${item.title}`,
-              "description": `${textLimited}`,
+              "description": `${textLimited}...\n\n[Continue reading on the CS:GO Blog](${item.link})`,
               "url": `${item.link}`,
               "color": 5478908,
               "thumbnail": {
