@@ -52,8 +52,8 @@ function rssTimer() {
     let sql_date = [];
 
     // Insert into variable
-    rows.forEach((rows) => {
-      sql_date = rows.date;
+    row.forEach((rows) => {
+      sql_date = row.date;
     });
 
     // Check if Update has been posted already. If not, continue.
