@@ -15,7 +15,7 @@ const feeder = new RssFeedEmitter({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Wi
 let lastDate;
 
 function getLastDate() {
-        // Getting date of last update from file
+        // Getting date of last update from check-update.txt file
         let fileDate = fs.readFileSync('check-update.txt');
         lastDate = fileDate.toString();
 }
