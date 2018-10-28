@@ -1,110 +1,80 @@
 // Requirements
 const { Client } = require('discord.js');
-const { exec } = require('child_process');
-const mysql = require('mysql');
+const fs = require('fs');
 const RssFeedEmitter = require('rss-feed-emitter');
 const htmlToText = require('html-to-text');
 const log = require('npmlog');
 
+// Load Config
+const cfg = require('./config.json');
+
 // Create feeder instance
 const feeder = new RssFeedEmitter({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'});
+
+// Setting last update variable
+let lastDate;
+
+function getLastDate() {
+        // Getting date of last update from file
+        let fileDate = fs.readFileSync('check-update.txt');
+        lastDate = fileDate.toString();
+}
+
+// Getting last date from check-update.txt file every 15 seconds
+setInterval(getLastDate, 15000);
 
 // Create Discord Bot Instance
 const bot = new Client();
 
-// Load Config
-const cfg = require('./config.json');
-
-// MySQL Database Connection
-const db = mysql.createConnection(cfg.mysql);
-if (cfg.mysql.user === 'root') log.warn('mysql', 'Using the root user in production is highly discouraged');
-
-// MySQL Connection log
-db.connect(err => {
-  if (err) {
-    log.error('mysql', "Can't connect to server:\n%s", err.stack);
-    return process.exit();
-  }
-  log.info('mysql', 'Connection successful (%s:%d)', cfg.mysql.host, cfg.mysql.port);
-});
-
 // Logging into Bot Account
 bot.on('ready', () => {
-  log.info('discord', `Logged in as ${bot.user.tag} (User ID: ${bot.user.id}) on ${bot.guilds.size} server(s)`);
-  bot.user.setActivity('Fetching Updates');
-  setInterval(rssTimer, 60000);
-});
+    log.info('discord', `Logged in as ${bot.user.tag} (User ID: ${bot.user.id}) on ${bot.guilds.size} server(s)`);
+    bot.user.setActivity('Fetching Updates');
 
-function rssTimer() {
-  // Get date of current day
-  let getDate = new Date();
-  let date = ((getDate.getMonth() +1) +'/'+ getDate.getDate() +'/'+ getDate.getFullYear());
-
-  // Set feeder URL
-  feeder.add({
-    url: 'http://blog.counter-strike.net/index.php/category/updates/feed/'
+    // Checking all 30 seconds, if there's a new update, and if it's been posted already
+    setInterval(getUpdate, 30000);
   });
 
-  db.query(`SELECT * FROM cs_updates WHERE date='${date}'`, (err, rows, fields) => {
-    if (err) return log.error('mysql', 'Query failed:\n%s', err.stack);
+function getUpdate() {
+    // Get date of current day and format it
+    let getDate = new Date();
+    let currentDate = ((getDate.getMonth() +1) +'/'+ getDate.getDate() +'/'+ getDate.getFullYear());
 
-    // Set variable for the SQL query
-    let sql_date = [];
-
-    // Insert into variable
-    row.forEach((rows) => {
-      sql_date = row.date;
+    // Set feeder URL
+    feeder.add({
+        url: 'http://blog.counter-strike.net/index.php/category/updates/feed/'
     });
 
-    // Check if Update has been posted already. If not, continue.
-    if (sql_date.constructor === Array && sql_date.length === 0) {
-      feeder.on('new-item', function(item) {
-        if (item.title.includes(`${date}`)) {
-          let text = htmlToText.fromString(item.description, {
+    feeder.on('new-item', function(item) {
+        let format = htmlToText.fromString(item.description, {
             wordwrap: 130
-          });
-          let textLimited = text.substr(0, 750)
-
-          // Sending Discord Message
-          if (textLimited.length > 749) {
-            bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
-              embed: {
-                "title": `${item.title}`,
-                "description": `${textLimited}...\n\n[Continue reading on the CS:GO Blog](${item.link})`,
-                "url": `${item.link}`,
-                "color": 5478908,
-                "thumbnail": {
-                  "url": "https://trinia.pro/file/09vvh.png"
-                }
-              }
-            });
-          } else {
-            bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
-              embed: {
-                "title": `${item.title}`,
-                "description": `${textLimited}`,
-                "url": `${item.link}`,
-                "color": 5478908,
-                "thumbnail": {
-                  "url": "https://trinia.pro/file/09vvh.png"
-                }
-              }
-            });
-          }
-          db.query(`INSERT INTO cs_updates (date) VALUES ('${date}')`);
-
-          // Restarting the Bot to prevent spam
-          exec(`pm2 restart csgoupdatebot`, (err, stdout, stderr) => {
-            if (err) {
-                // node couldn't execute the command
-            }
         });
+
+        // Limiting the update to 10 lines
+        var BlogPost = format.split('\n', 10);
+
+        if (item.title.includes(`${currentDate}`)) {
+            if (lastDate !== currentDate) {
+                bot.channels.get(cfg.channelid).send("@everyone A new CS:GO Update has been released!", {
+                    embed: {
+                      "title": `${item.title}`,
+                      "description": `${BlogPost.join('\n')}...\n\n[Continue reading on the CS:GO Blog](${item.link})`,
+                      "url": `${item.link}`,
+                      "color": 5478908,
+                      "thumbnail": {
+                        "url": "https://raw.githubusercontent.com/Triniayo/nodejs-discord-csgoupdate/master/csgo-icon.png"
+                      }
+                    }
+                  });
+
+                // Storing date of the latest update in the check-update.txt
+                fs.writeFileSync('check-update.txt', `${currentDate}`)
+            }
+        } else {
+            // Do nothing if update has been posted already.
         }
-      });
-    } else {
-      // Do nothing if update has been posted already.
-    }
-  });
+    });
+
 }
 
 bot.login(cfg.token);
