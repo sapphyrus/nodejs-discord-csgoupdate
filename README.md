@@ -11,7 +11,6 @@ If you find any bugs, please do not hesitate to report them to me.
 
 # Requirements
 
-* MySQL Server
 * Node.js
 
 # Setup
